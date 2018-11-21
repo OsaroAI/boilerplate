@@ -1,11 +1,12 @@
 #!/bin/bash
+. "${IMAGE_ROOT:?}/lib.sh"
 set -eo pipefail
 set -xv
 
 shopt -s nullglob
 
 : ${CUDA_ROOT:=/usr/local/cuda}
-: ${NVIDIA_DOCKER_ROOT:=/usr/local/nvidia}
+: ${NVIDIA_DOCKER_ROOT:=/usr/local/nvidia-fake}
 
 : ${libarch:=lib64}
 
@@ -25,4 +26,9 @@ for stub in "${stubs[@]}"; do
 done
 
 ln -svr libcuda.so libcuda.so.1
+
+# This makes /usr/local modifiable by $APP_USER.
+# Yeah, I don't like it either, but there's no other way to allow this to happen
+# even post "USER"
+chown -c "${APP_USER:?}:${APP_USER:?}" "$NVIDIA_DOCKER_ROOT/.."
 
