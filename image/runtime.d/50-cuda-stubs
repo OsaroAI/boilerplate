@@ -1,0 +1,15 @@
+#!/bin/bash
+. "${IMAGE_ROOT:?}/lib.sh"
+set -eo pipefail
+set -xv
+
+cpudir=/usr/local/nvidia-fake
+dir=/usr/local/nvidia
+
+if [[ ! -e "$dir" ]]; then
+	debug "We are _not_ running under nvidia-docker it seems, so I'm injecting in sweet stubs."
+	ln -sfvr "$cpudir" "$dir"
+else
+	debug "We are running under nvidia-docker it seems, so I'm _not_ injecting in sweet stubs."
+fi
+

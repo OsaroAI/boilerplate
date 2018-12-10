@@ -1,0 +1,34 @@
+#!/bin/bash
+. "${IMAGE_ROOT:?}/lib.sh"
+set -eo pipefail
+set -xv
+
+shopt -s nullglob
+
+: ${CUDA_ROOT:=/usr/local/cuda}
+: ${NVIDIA_DOCKER_ROOT:=/usr/local/nvidia-fake}
+
+: ${libarch:=lib64}
+
+stubs=(libcuda.so libnvidia-ml.so)
+
+if [[ ! -e "${CUDA_ROOT:?}" ]]; then
+	echo "[$0] No CUDA installation found" >&2
+	exit 0
+fi
+
+mkcd() { mkdir -pv "$1" && cd "$1"; }
+
+mkcd "${NVIDIA_DOCKER_ROOT:?}/$libarch"
+
+for stub in "${stubs[@]}"; do
+	ln -svr "$CUDA_ROOT/$libarch/stubs/$stub" ./
+done
+
+ln -svr libcuda.so libcuda.so.1
+
+# This makes /usr/local modifiable by $APP_USER.
+# Yeah, I don't like it either, but there's no other way to allow this to happen
+# even post "USER"
+chown -c "${APP_USER:?}:${APP_USER:?}" "$NVIDIA_DOCKER_ROOT/.."
+
